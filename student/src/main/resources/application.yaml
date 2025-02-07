@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: student-microservice
+  profiles:
+    default: local

@@ -1,0 +1,107 @@
+name: renforcement_backend_java
+services:
+  service-discovery:
+    build: 
+      context: ./serviceDiscovery
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+    hostname: service-discovery
+    ports:
+      - 8761:8761
+  api-gateway:
+    build:
+      context: ./apiGateway
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+    depends_on:
+      service-discovery:
+        condition: service_healthy
+    hostname: api-gateway
+    ports:
+      - 8080:8080
+  postgres-db:
+    profiles:
+      - school
+      - auth
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DATABASE_URL}"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    # volumes:
+    #   - postgres-data:/var/lib/postgresql/data
+  school-microservice:
+    profiles:
+      - school
+    build:
+      context: ./school
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      SCHOOL_DATABASE_URL: ${JDBC_DATABASE_URL}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+    hostname: school-microservice
+    # ports:
+    #   - 8081:8080
+  auth-microservice:
+    profiles:
+      - auth
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    command: ["-Dapp.jwt.secret=${AUTH_SECRET}"]
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      AUTH_DATABASE_URL: ${JDBC_DATABASE_URL}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+    hostname: auth-microservice
+    ports:
+      - 8083:8080
+  mongodb:
+    profiles:
+      - student
+    image: mongo
+    # volumes:
+    #   - mongo-data:/data/db
+  student-microservice:
+    profiles:
+      - student
+    build:
+      context: ./student
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+    depends_on:
+      school-microservice:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+    hostname: student-microservice
+    # ports:
+    #   - 8082:8080
+
+volumes:
+  postgres-data:
+  pgadmin-data:
+  mongo-data:

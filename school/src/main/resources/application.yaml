@@ -1,0 +1,11 @@
+spring:
+  profiles:
+    default: local
+  application:
+    name: school-microservice
+  jpa:
+    hibernate:
+      ddl-auto: update
+eureka:
+  client:
+    filter-only-up-instances: true

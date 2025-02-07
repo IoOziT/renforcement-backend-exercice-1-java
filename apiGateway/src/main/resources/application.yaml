@@ -1,0 +1,19 @@
+spring:
+  profiles:
+    default: local
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: schools
+          uri: lb://school-microservice
+          predicates:
+            - Path=/schools/**
+        - id: students
+          uri: lb://student-microservice
+          predicates:
+            - Path=/students/**
+# eureka:
+  # client:
+    # register-with-eureka: false

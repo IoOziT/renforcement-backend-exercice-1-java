@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: ${SCHOOL_DATABASE_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+eureka:
+  client:
+    service-url:
+      defaultZone: http://service-discovery:8761/eureka
